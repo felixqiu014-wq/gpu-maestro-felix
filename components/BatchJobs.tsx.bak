@@ -1,0 +1,762 @@
+
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { MOCK_WORKLOADS, STATUS_COLORS, MOCK_MODELS, MOCK_DATASETS, GPU_PRICING } from '../constants';
+import { JobStatus, Workload, ResourceType, JobPriority } from '../types';
+import { Clock, Search, ChevronRight, Filter, Box, Layers, Cpu, Plus, X, GitBranch, Monitor, Database, Settings2, Timer, Rocket, ChevronDown, Zap, Activity } from 'lucide-react';
+
+const PRIORITY_MULTIPLIERS: Record<JobPriority, number> = {
+  [JobPriority.LOW]: 0.8,
+  [JobPriority.NORMAL]: 1.0,
+  [JobPriority.HIGH]: 1.5,
+  [JobPriority.URGENT]: 2.0,
+};
+
+const PRIORITY_COLORS: Record<JobPriority, string> = {
+  [JobPriority.LOW]: 'text-slate-400 bg-slate-400/10 border-slate-400/20',
+  [JobPriority.NORMAL]: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+  [JobPriority.HIGH]: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
+  [JobPriority.URGENT]: 'text-red-400 bg-red-400/10 border-red-400/20',
+};
+
+const BatchJobs: React.FC = () => {
+  const [jobs, setJobs] = useState<Workload[]>(MOCK_WORKLOADS.filter(w => w.type === 'BATCH').map(j => ({ ...j, timeoutMinutes: 240 })));
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedStatuses, setSelectedStatuses] = useState<JobStatus[]>([]);
+  const [selectedOwners, setSelectedOwners] = useState<string[]>([]);
+  const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [isOwnerDropdownOpen, setIsOwnerDropdownOpen] = useState(false);
+
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+  const ownerDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+        setIsStatusDropdownOpen(false);
+      }
+      if (ownerDropdownRef.current && !ownerDropdownRef.current.contains(event.target as Node)) {
+        setIsOwnerDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Get unique owners from jobs
+  const uniqueOwners = useMemo(() => {
+    return Array.from(new Set(jobs.map(job => job.owner))).sort();
+  }, [jobs]);
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter(job => {
+      const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes(job.status);
+      const ownerMatch = selectedOwners.length === 0 || selectedOwners.includes(job.owner);
+      return statusMatch && ownerMatch;
+    });
+  }, [jobs, selectedStatuses, selectedOwners]);
+
+  const toggleStatusFilter = (status: JobStatus) => {
+    setSelectedStatuses(prev =>
+      prev.includes(status)
+        ? prev.filter(s => s !== status)
+        : [...prev, status]
+    );
+  };
+
+  const toggleOwnerFilter = (owner: string) => {
+    setSelectedOwners(prev =>
+      prev.includes(owner)
+        ? prev.filter(o => o !== owner)
+        : [...prev, owner]
+    );
+  };
+
+  const clearAllFilters = () => {
+    setSelectedStatuses([]);
+    setSelectedOwners([]);
+  };
+
+  const toggleJobExpansion = (jobId: string) => {
+    setExpandedJobs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(jobId)) {
+        newSet.delete(jobId);
+      } else {
+        newSet.add(jobId);
+      }
+      return newSet;
+    });
+  };
+
+  // Form State
+  const [formData, setFormData] = useState({
+    name: '',
+    sourceType: 'git' as 'git' | 'image',
+    gitRepo: '',
+    gitBranch: 'main',
+    entrypoint: 'train.py',
+    imageUri: '',
+    imageCommand: '',
+    modelId: '',
+    datasetId: '',
+    gpuType: ResourceType.H100,
+    gpuCount: 1,
+    gpuSharingMode: 'exclusive' as 'shared' | 'exclusive',
+    priority: JobPriority.NORMAL,
+    timeoutMinutes: 240 // Default 4 hours
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newJob: Workload = {
+      id: `wl-batch-${Math.floor(Math.random() * 1000)}`,
+      name: formData.name || 'new-training-job',
+      type: 'BATCH',
+      owner: 'Admin User',
+      gpuRequested: formData.gpuCount,
+      gpuType: formData.gpuType,
+      status: JobStatus.PENDING,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      priority: formData.priority,
+      timeoutMinutes: formData.timeoutMinutes,
+      logs: ['Job queued...', 'Validating manifest...', 'Pulling workspace source...']
+    };
+    setJobs([newJob, ...jobs]);
+    setIsCreateModalOpen(false);
+  };
+
+  return (
+    <div className="space-y-6 px-6 py-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">模型训练与批处理</h1>
+          <p className="text-slate-400 mt-1">在集群中启动任务以训练您的模型</p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-indigo-600 rounded-xl font-bold text-white hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 transition-all hover:-translate-y-0.5"
+          >
+            <Plus size={18} />
+            新建训练任务
+          </button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Filter size={16} className="text-slate-500" />
+          <span className="text-sm font-bold text-slate-400">筛选器：</span>
+        </div>
+
+        {/* Status Multi-select Dropdown */}
+        <div className="relative min-w-[180px]" ref={statusDropdownRef}>
+          <div
+            onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+            className="min-h-[42px] bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 flex items-center gap-2 flex-wrap cursor-pointer hover:border-slate-700 transition-colors"
+          >
+            {selectedStatuses.length === 0 ? (
+              <span className="text-sm text-slate-500">选择状态</span>
+            ) : (
+              selectedStatuses.map((status) => (
+                <span
+                  key={status}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleStatusFilter(status);
+                  }}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-bold border ${STATUS_COLORS[status]} flex items-center gap-1`}
+                >
+                  {status}
+                  <X size={10} />
+                </span>
+              ))
+            )}
+            <ChevronDown size={14} className="ml-auto text-slate-600" />
+          </div>
+
+          {/* Dropdown Options */}
+          {isStatusDropdownOpen && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-xl z-10 max-h-[300px] overflow-y-auto">
+              {Object.values(JobStatus).map((status) => {
+                const isSelected = selectedStatuses.includes(status);
+                return (
+                  <div
+                    key={status}
+                    onClick={() => toggleStatusFilter(status)}
+                    className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-slate-800 transition-colors flex items-center justify-between ${
+                      isSelected ? 'bg-slate-800' : ''
+                    }`}
+                  >
+                    <span className={isSelected ? 'text-white font-medium' : 'text-slate-400'}>{status}</span>
+                    {isSelected && <span className="text-indigo-400">✓</span>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Owner Multi-select Dropdown */}
+        <div className="relative min-w-[180px]" ref={ownerDropdownRef}>
+          <div
+            onClick={() => setIsOwnerDropdownOpen(!isOwnerDropdownOpen)}
+            className="min-h-[42px] bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 flex items-center gap-2 flex-wrap cursor-pointer hover:border-slate-700 transition-colors"
+          >
+            {selectedOwners.length === 0 ? (
+              <span className="text-sm text-slate-500">选择所有者</span>
+            ) : (
+              selectedOwners.map((owner) => (
+                <span
+                  key={owner}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleOwnerFilter(owner);
+                  }}
+                  className="px-2 py-1 rounded-lg text-[11px] font-bold border bg-indigo-600/10 text-indigo-400 border-indigo-500/20 flex items-center gap-1"
+                >
+                  {owner}
+                  <X size={10} />
+                </span>
+              ))
+            )}
+            <ChevronDown size={14} className="ml-auto text-slate-600" />
+          </div>
+
+          {/* Dropdown Options */}
+          {isOwnerDropdownOpen && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-xl z-10 max-h-[300px] overflow-y-auto">
+              {uniqueOwners.map((owner) => {
+                const isSelected = selectedOwners.includes(owner);
+                return (
+                  <div
+                    key={owner}
+                    onClick={() => toggleOwnerFilter(owner)}
+                    className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-slate-800 transition-colors flex items-center justify-between ${
+                      isSelected ? 'bg-slate-800' : ''
+                    }`}
+                  >
+                    <span className={isSelected ? 'text-white font-medium' : 'text-slate-400'}>{owner}</span>
+                    {isSelected && <span className="text-indigo-400">✓</span>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {(selectedStatuses.length > 0 || selectedOwners.length > 0) && (
+          <button
+            onClick={clearAllFilters}
+            className="px-3 py-2 text-xs text-slate-500 hover:text-slate-300 hover:bg-slate-800 rounded-lg transition-all"
+          >
+            清除全部
+          </button>
+        )}
+      </div>
+
+      <div className="bg-slate-900/20 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+        <div className="grid grid-cols-1 divide-y divide-slate-800">
+          {filteredJobs.map((job) => (
+            <div key={job.id} className="bg-slate-900/40 p-6 hover:bg-slate-800/20 transition-all group">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex items-center gap-5">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-indigo-400 border border-slate-700 group-hover:border-indigo-500/30 transition-colors">
+                    <Layers size={24} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-lg font-bold text-white">{job.name}</h3>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${STATUS_COLORS[job.status]}`}>
+                        {job.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 mt-1.5">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <Box size={14} className="text-slate-600" />
+                        <span>所有者: <span className="text-slate-300 font-medium">{job.owner}</span></span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <Cpu size={14} className="text-slate-600" />
+                        <span>资源: <span className="text-slate-300 font-medium">{job.gpuRequested}x GPU</span></span>
+                      </div>
+                      {job.timeoutMinutes && (
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                          <Timer size={14} className="text-slate-600" />
+                          <span>超时: <span className="text-slate-300 font-medium">{job.timeoutMinutes}分钟</span></span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-right hidden sm:block">
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-1">创建时间</p>
+                  <div className="text-xs font-mono text-slate-400" suppressHydrationWarning>
+                    {new Date(job.createdAt).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+
+              {job.status === JobStatus.RUNNING && (
+                <>
+                  <button
+                    onClick={() => toggleJobExpansion(job.id)}
+                    className="mt-4 flex items-center gap-2 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                  >
+                    <ChevronRight
+                      size={16}
+                      className={`transition-transform ${expandedJobs.has(job.id) ? 'rotate-90' : ''}`}
+                    />
+                    {expandedJobs.has(job.id) ? '隐藏' : '显示'}训练进度
+                  </button>
+
+                  {expandedJobs.has(job.id) && (
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-8 items-end animate-in slide-in-from-top-2">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-bold text-slate-500 uppercase tracking-tighter">训练进度</span>
+                          <span className="font-mono text-indigo-400">步骤 4,200 / 10,000</span>
+                        </div>
+                        <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                          <div className="bg-gradient-to-r from-indigo-600 to-purple-500 h-full rounded-full transition-all duration-1000" style={{ width: '42%' }}></div>
+                        </div>
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="flex-1 bg-slate-950/40 p-3 rounded-xl border border-slate-800/50">
+                          <p className="text-[10px] text-slate-500 font-bold mb-1 uppercase">指标: 验证损失</p>
+                          <p className="text-sm text-slate-300 font-mono">0.231</p>
+                        </div>
+                        <div className="flex-1 bg-slate-950/40 p-3 rounded-xl border border-slate-800/50">
+                          <p className="text-[10px] text-slate-500 font-bold mb-1 uppercase">吞吐量</p>
+                          <p className="text-sm text-slate-300 font-mono">1.2k tokens/s</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CREATE MODAL */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-[70] overflow-y-auto bg-slate-950/90 backdrop-blur-sm p-6 animate-in fade-in duration-300">
+          <div className="flex items-center justify-center min-h-full">
+            <div className="bg-slate-900 border border-slate-800 w-full max-w-5xl rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[calc(100vh-3rem)]">
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
+                  <Rocket size={20} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">提交训练任务</h2>
+                  <p className="text-[10px] text-slate-500">将高性能批处理工作负载部署到集群</p>
+                </div>
+              </div>
+              <button onClick={() => setIsCreateModalOpen(false)} className="p-2 hover:bg-slate-800 rounded-full text-slate-500 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto">
+              <div className="grid grid-cols-12 gap-4">
+                {/* Left Column - Main Settings */}
+                <div className="col-span-7 space-y-4">
+                  {/* Basic Meta */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">任务名称</span>
+                      <input
+                        required
+                        type="text"
+                        placeholder="例如: resnet-finetune-v1"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-700"
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">GPU类型</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[ResourceType.H100, ResourceType.A100, ResourceType.L40S, ResourceType.V100].map(t => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setFormData({
+                              ...formData,
+                              gpuType: t,
+                              gpuCount: formData.gpuType === ResourceType.H100 ? 1 :                            })}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg ${
+                              formData.gpuType === t
+                                ? 'bg-indigo-600 text-white'
+                                : 'text-slate-500 hover:text-slate-300'
+                            }
+                          ))}
+                        ))}
+                      </div>
+                    </label>
+                    </div>
+                  </div>
+                  </div>
+
+                  {/* Source Selection */}
+                  <div>
+                    <div className="flex gap-2 p-1 bg-slate-950 rounded-xl border border-slate-800 mb-3">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({...formData, sourceType: 'git'})}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${formData.sourceType === 'git' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                      >
+                        <GitBranch size={14} />
+                        Git仓库
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({...formData, sourceType: 'image'})}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${formData.sourceType === 'image' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                      >
+                        <Monitor size={14} />
+                        容器镜像
+                      </button>
+                    </div>
+
+                    {formData.sourceType === 'git' ? (
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="col-span-2">
+                          <label className="block">
+                            <span className="text-[9px] text-slate-500 mb-1 block">仓库URL</span>
+                            <input
+                              type="text"
+                              placeholder="https://github.com/org/repo.git"
+                              className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none"
+                              value={formData.gitRepo}
+                              onChange={(e) => setFormData({...formData, gitRepo: e.target.value})}
+                            />
+                          </label>
+                        </div>
+                        <div>
+                          <label className="block">
+                            <span className="text-[9px] text-slate-500 mb-1 block">分支</span>
+                            <input
+                              type="text"
+                              placeholder="main"
+                              className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none"
+                              value={formData.gitBranch}
+                              onChange={(e) => setFormData({...formData, gitBranch: e.target.value})}
+                            />
+                          </label>
+                        </div>
+                        <div className="col-span-3">
+                          <label className="block">
+                            <span className="text-[9px] text-slate-500 mb-1 block">入口命令</span>
+                            <input
+                              type="text"
+                              placeholder="python train.py --config config.yaml"
+                              className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 font-mono outline-none"
+                              value={formData.entrypoint}
+                              onChange={(e) => setFormData({...formData, entrypoint: e.target.value})}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block">
+                            <span className="text-[9px] text-slate-500 mb-1 block">镜像URL</span>
+                            <input
+                              type="text"
+                              placeholder="registry.hub.docker.com/pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime"
+                              className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none"
+                              value={formData.imageUri}
+                              onChange={(e) => setFormData({...formData, imageUri: e.target.value})}
+                            />
+                          </label>
+                        </div>
+                        <div>
+                          <label className="block">
+                            <span className="text-[9px] text-slate-500 mb-1 block">覆盖命令</span>
+                            <input
+                              type="text"
+                              placeholder="sh launch.sh --epochs 100"
+                              className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 font-mono outline-none"
+                              value={formData.imageCommand}
+                              onChange={(e) => setFormData({...formData, imageCommand: e.target.value})}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Data & Model Mounts */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                        <Box size={12} className="text-indigo-400" />
+                        模型
+                      </span>
+                      <div className="relative">
+                        <select
+                          className="w-full appearance-none bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none pr-8"
+                          value={formData.modelId}
+                          onChange={(e) => setFormData({...formData, modelId: e.target.value})}
+                        >
+                          <option value="">None</option>
+                          {MOCK_MODELS.map(m => (
+                            <option key={m.id} value={m.id}>{m.name}</option>
+                          ))}
+                        </select>
+                        <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 rotate-90 text-slate-600 pointer-events-none" />
+                      </div>
+                    </label>
+                    <label className="block">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                        <Database size={12} className="text-emerald-400" />
+                        数据集
+                      </span>
+                      <div className="relative">
+                        <select
+                          className="w-full appearance-none bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none pr-8"
+                          value={formData.datasetId}
+                          onChange={(e) => setFormData({...formData, datasetId: e.target.value})}
+                        >
+                          <option value="">None</option>
+                          {MOCK_DATASETS.map(d => (
+                            <option key={d.id} value={d.id}>{d.name}</option>
+                          ))}
+                        </select>
+                        <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 rotate-90 text-slate-600 pointer-events-none" />
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Hardware Config */}
+                  <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800 space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                      <Settings2 size={14} className="text-amber-400" />
+                      <h3 className="text-[10px] font-bold text-white uppercase tracking-widest">硬件配置</h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest block mb-2">GPU类型</span>
+                        <div className="flex gap-2">
+                          {[ResourceType.H100, ResourceType.A100, ResourceType.L40S, ResourceType.V100].map(t => (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => setFormData({...formData, gpuType: t})}
+                              className={`flex-1 py-2 text-[10px] font-bold rounded-lg border transition-all ${formData.gpuType === t ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'}`}
+                            >
+                              {t.split(' ')[1]}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">GPU分配</span>
+                          <span className={`text-xs font-mono px-2 py-0.5 rounded-lg ${
+                            formData.gpuSharingMode === 'shared'
+                              ? 'bg-amber-400/10 text-amber-400'
+                              : 'bg-indigo-400/10 text-indigo-400'
+                          }`}>
+                            {formData.gpuCount}
+                          </span>
+                        </div>
+                        <div className="flex gap-1 p-1 bg-slate-900 rounded-lg border border-slate-800 mb-2">
+                          <button
+                            type="button"
+                            onClick={() => setFormData({
+                              ...formData,
+                              gpuSharingMode: 'exclusive',
+                              gpuCount: Math.max(1, Math.ceil(formData.gpuCount))
+                            })}
+                            className={`flex-1 py-1 text-[9px] font-bold rounded transition-all ${
+                              formData.gpuSharingMode === 'exclusive'
+                                ? 'bg-indigo-600 text-white'
+                                : 'text-slate-500 hover:text-slate-300'
+                            }`}
+                          >
+                            <Zap size={10} className="inline mr-1" />
+                            独占
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData({
+                              ...formData,
+                              gpuSharingMode: 'shared',
+                              gpuCount: formData.gpuCount > 0.9 ? 0.5 : (formData.gpuCount < 0.1 ? 0.5 : formData.gpuCount)
+                            })}
+                            className={`flex-1 py-1 text-[9px] font-bold rounded transition-all ${
+                              formData.gpuSharingMode === 'shared'
+                                ? 'bg-amber-600 text-white'
+                                : 'text-slate-500 hover:text-slate-300'
+                            }`}
+                          >
+                            <Activity size={10} className="inline mr-1" />
+                            共享
+                          </button>
+                        </div>
+                        {formData.gpuSharingMode === 'shared' ? (
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setFormData({ ...formData, gpuCount: 0.5 })}
+                              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                                formData.gpuCount === 0.5
+                                  ? 'bg-amber-600 text-white shadow-lg'
+                                  : 'bg-slate-800 text-slate-400 hover:text-slate-300'
+                              }`}
+                            >
+                              0.5 GPU
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFormData({ ...formData, gpuCount: 0.25 })}
+                              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                                formData.gpuCount === 0.25
+                                  ? 'bg-amber-600 text-white shadow-lg'
+                                  : 'bg-slate-800 text-slate-400 hover:text-slate-300'
+                              }`}
+                            >
+                              0.25 GPU
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <input
+                              type="range"
+                              min="1"
+                              max="32"
+                              step="1"
+                              value={formData.gpuCount}
+                              onChange={e => {
+                                const newVal = parseInt(e.target.value);
+                                setFormData({
+                                  ...formData,
+                                  gpuCount: newVal
+                                });
+                              }}
+                              className="w-full accent-indigo-500"
+                            />
+                            <div className="flex justify-between text-[8px] text-slate-600 mt-1">
+                              <span>1</span>
+                              <span>32</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Mode Description for Training */}
+                    <div className={`p-2 rounded-lg text-[9px] ${
+                      formData.gpuSharingMode === 'shared'
+                        ? 'bg-amber-400/5 text-amber-300/80 border border-amber-400/10'
+                        : 'bg-indigo-400/5 text-indigo-300/80 border border-indigo-400/10'
+                    }`}>
+                      {formData.gpuSharingMode === 'shared'
+                        ? '共享模式：多个任务可共享同一GPU'
+                        : '独占模式：为该任务分配专用GPU'}
+                    </div>
+
+                    <div className="pt-2">
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="flex items-center gap-2">
+                          <Timer size={14} className="text-slate-500" />
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">超时时间</span>
+                        </label>
+                        <span className="text-xs font-mono text-indigo-400">{formData.timeoutMinutes}m ({Math.round(formData.timeoutMinutes / 60 * 10) / 10}h)</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="30"
+                        max="1440"
+                        step="30"
+                        value={formData.timeoutMinutes}
+                        onChange={e => setFormData({...formData, timeoutMinutes: parseInt(e.target.value)})}
+                        className="w-full accent-indigo-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column - Cost Summary & Actions */}
+                <div className="col-span-5 flex flex-col">
+                  {/* Cost Estimation */}
+                  <div className="bg-gradient-to-br from-indigo-600/10 to-purple-600/10 border border-indigo-500/30 rounded-xl p-4 flex-1 flex flex-col">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider">预估成本</span>
+                      {formData.priority !== JobPriority.NORMAL && (
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-lg ${PRIORITY_COLORS[formData.priority]}`}>
+                          {formData.priority} ({PRIORITY_MULTIPLIERS[formData.priority]}x)
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex-1 flex flex-col justify-center space-y-3">
+                      <div className="text-center">
+                        <p className="text-3xl font-bold text-white mb-1">
+                          RMB {(GPU_PRICING[formData.gpuType].hourly * formData.gpuCount * PRIORITY_MULTIPLIERS[formData.priority]).toFixed(2)}
+                        </p>
+                        <p className="text-[10px] text-indigo-200/70">每小时</p>
+                      </div>
+
+                      <div className="bg-slate-950/30 rounded-lg p-3 border border-indigo-500/10">
+                        <div className="flex justify-between items-center text-[9px] mb-2">
+                          <span className="text-indigo-200/60">运行 {Math.round(formData.timeoutMinutes / 60 * 10) / 10}小时</span>
+                          <span className="font-mono text-white text-sm">
+                            RMB {(GPU_PRICING[formData.gpuType].hourly * formData.gpuCount * PRIORITY_MULTIPLIERS[formData.priority] * (formData.timeoutMinutes / 60)).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-center pt-2 border-t border-indigo-500/20">
+                        <div className="flex items-center justify-center gap-1 text-xs text-slate-400">
+                          <Cpu size={12} />
+                          <span>{formData.gpuType.split(' ')[1]}</span>
+                          <span>×</span>
+                          <span>{formData.gpuCount}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 mt-4">
+                    <button
+                      type="submit"
+                      className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20"
+                    >
+                      确认并加入队列
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsCreateModalOpen(false)}
+                      className="w-full py-3 bg-slate-800 text-slate-400 font-bold rounded-xl hover:bg-slate-700 transition-all"
+                    >
+                      取消
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default BatchJobs;

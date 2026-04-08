@@ -1,0 +1,98 @@
+# GPU Maestro 中英文翻译对照表
+
+## 导航和通用
+Dashboard -> 仪表盘
+Sandboxes -> 沙箱环境
+Batch Jobs -> 批处理任务
+Models -> 模型管理
+Datasets -> 数据集
+Files & Storage -> 文件存储
+Admin Panel -> 管理后台
+Account -> 账户设置
+
+## 状态
+RUNNING -> 运行中
+PENDING -> 等待中
+COMPLETED -> 已完成
+FAILED -> 失败
+TERMINATED -> 已终止
+HEALTHY -> 健康
+WARNING -> 警告
+CRITICAL -> 严重
+
+## 操作
+Create -> 创建
+Launch -> 启动
+Deploy -> 部署
+Submit -> 提交
+Cancel -> 取消
+Save -> 保存
+Delete -> 删除
+Edit -> 编辑
+Refresh -> 刷新
+Search -> 搜索
+Filter -> 筛选
+
+## 资源相关
+GPU -> GPU
+CPU -> CPU
+Memory -> 内存
+Storage -> 存储
+VRAM -> 显存
+Resource -> 资源
+Cluster -> 集群
+Node -> 节点
+
+## 成本相关
+Cost -> 成本
+Hourly Cost -> 每小时成本
+Estimated Cost -> 预估成本
+Daily -> 每天
+Monthly -> 每月
+Billed per minute -> 按分钟计费
+
+## 工作负载相关
+Workload -> 工作负载
+Job -> 任务
+Task -> 任务
+Workspace -> 工作区
+Sandbox -> 沙箱
+Training -> 训练
+Inference -> 推理
+
+## 数据相关
+Dataset -> 数据集
+Model -> 模型
+File -> 文件
+Folder -> 文件夹
+Bucket -> 存储桶
+Upload -> 上传
+Download -> 下载
+
+## 配置相关
+Configuration -> 配置
+Settings -> 设置
+Priority -> 优先级
+Timeout -> 超时时间
+Image -> 镜像
+Command -> 命令
+Environment Variables -> 环境变量
+
+## 用户相关
+User -> 用户
+Admin -> 管理员
+Owner -> 所有者
+Role -> 角色
+Department -> 部门
+Email -> 邮箱
+
+## 界面元素
+Name -> 名称
+Type -> 类型
+Size -> 大小
+Status -> 状态
+Actions -> 操作
+Description -> 描述
+Version -> 版本
+Updated -> 更新时间
+Created -> 创建时间

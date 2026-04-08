@@ -1,0 +1,46 @@
+
+import React, { useState } from 'react';
+import Layout from './components/Layout';
+import Dashboard from './components/Dashboard';
+import Sandboxes from './components/Sandboxes';
+import BatchJobs from './components/BatchJobs';
+import ModelManagement from './components/ModelManagement';
+import DatasetManagement from './components/DatasetManagement';
+import AdminPanel from './components/AdminPanel';
+import FileManagement from './components/FileManagement';
+import AccountSettings from './components/AccountSettings';
+
+const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'sandboxes':
+        return <Sandboxes />;
+      case 'jobs':
+        return <BatchJobs />;
+      case 'models':
+        return <ModelManagement />;
+      case 'datasets':
+        return <DatasetManagement />;
+      case 'files':
+        return <FileManagement />;
+      case 'admin':
+        return <AdminPanel />;
+      case 'account':
+        return <AccountSettings />;
+      default:
+        return <Dashboard />;
+    }
+  };
+
+  return (
+    <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+      {renderContent()}
+    </Layout>
+  );
+};
+
+export default App;
