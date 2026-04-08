@@ -1,33 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { MOCK_WORKLOADS, STATUS_COLORS } from '../constants';
 import { JobStatus, Workload } from '../types';
 // Added Activity to the imports from lucide-react
 import { Plus, Terminal, Clock, ExternalLink, MoreVertical, Search, Zap, Trash2, StopCircle, RefreshCcw, Activity } from 'lucide-react';
-import { getJobStatusInsights } from '../services/geminiService';
 
 const Workspaces: React.FC = () => {
   const [sessions, setSessions] = useState<Workload[]>(MOCK_WORKLOADS.filter(w => w.type === 'INTERACTIVE'));
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Workload | null>(null);
-  const [insight, setInsight] = useState<string | null>(null);
-  const [isLoadingInsight, setIsLoadingInsight] = useState(false);
-
-  const fetchInsights = async (session: Workload) => {
-    if (!session.logs) return;
-    setIsLoadingInsight(true);
-    const result = await getJobStatusInsights(session.logs, session.name);
-    setInsight(result);
-    setIsLoadingInsight(false);
-  };
-
-  useEffect(() => {
-    if (selectedSession) {
-      fetchInsights(selectedSession);
-    } else {
-      setInsight(null);
-    }
-  }, [selectedSession]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -160,18 +141,11 @@ const Workspaces: React.FC = () => {
                 <div className="bg-indigo-600/5 border border-indigo-500/20 rounded-2xl p-6">
                   <div className="flex items-center gap-3 mb-3">
                     <Activity size={18} className="text-indigo-400" />
-                    <h3 className="text-sm font-bold text-indigo-300 uppercase tracking-widest">AI性能洞察</h3>
+                    <h3 className="text-sm font-bold text-indigo-300 uppercase tracking-widest">运行摘要</h3>
                   </div>
-                  {isLoadingInsight ? (
-                    <div className="flex items-center gap-4 text-slate-400 animate-pulse">
-                      <RefreshCcw size={16} className="animate-spin" />
-                      <p className="text-sm italic">Gemini正在分析会话健康状态...</p>
-                    </div>
-                  ) : (
-                    <p className="text-sm leading-relaxed text-indigo-100/80">
-                      {insight || "此会话暂无洞察信息。"}
-                    </p>
-                  )}
+                  <p className="text-sm leading-relaxed text-indigo-100/80">
+                    当前工作区处于正常运行状态，资源占用与日志输出可直接在当前面板查看。若需要诊断异常，建议优先检查实时日志、镜像配置和 GPU 资源分配。
+                  </p>
                 </div>
               </div>
 

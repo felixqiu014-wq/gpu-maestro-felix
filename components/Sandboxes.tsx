@@ -1,9 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { MOCK_WORKLOADS, STATUS_COLORS, MOCK_MODELS, MOCK_DATASETS, GPU_PRICING } from '../constants';
 import { JobStatus, Workload, ResourceType, JobPriority } from '../types';
 import { Plus, Terminal, Clock, ExternalLink, Search, Zap, StopCircle, RefreshCcw, Activity, Code2, Globe, Cpu, Database, Box, X, ChevronRight, Copy, Monitor, ShieldCheck, Trash2, Package, Check, BookOpen } from 'lucide-react';
-import { getJobStatusInsights } from '../services/geminiService';
 
 const PRIORITY_MULTIPLIERS: Record<JobPriority, number> = {
   [JobPriority.LOW]: 0.8,
@@ -23,8 +22,6 @@ const Sandboxes: React.FC = () => {
   const [sessions, setSessions] = useState<Workload[]>(MOCK_WORKLOADS.filter(w => w.type === 'INTERACTIVE'));
   const [selectedSession, setSelectedSession] = useState<Workload | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [insight, setInsight] = useState<string | null>(null);
-  const [isLoadingInsight, setIsLoadingInsight] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportingSession, setExportingSession] = useState<Workload | null>(null);
@@ -50,22 +47,6 @@ const Sandboxes: React.FC = () => {
     description: '',
     registryPath: 'registry.hub.docker.com'
   });
-
-  const fetchInsights = async (session: Workload) => {
-    if (!session.logs) return;
-    setIsLoadingInsight(true);
-    const result = await getJobStatusInsights(session.logs, session.name);
-    setInsight(result);
-    setIsLoadingInsight(false);
-  };
-
-  useEffect(() => {
-    if (selectedSession) {
-      fetchInsights(selectedSession);
-    } else {
-      setInsight(null);
-    }
-  }, [selectedSession]);
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -771,10 +752,10 @@ const Sandboxes: React.FC = () => {
                 <div className="bg-indigo-600/5 border border-indigo-500/20 rounded-3xl p-6">
                   <div className="flex items-center gap-2 mb-3">
                     <Activity size={16} className="text-indigo-400" />
-                    <h3 className="text-xs font-bold text-indigo-300 uppercase tracking-widest">AI Debugging</h3>
+                    <h3 className="text-xs font-bold text-indigo-300 uppercase tracking-widest">运行状态摘要</h3>
                   </div>
                   <p className="text-[11px] text-slate-400 leading-relaxed italic">
-                    {insight || "Gemini is monitoring environment for potential CUDA OOM issues..."}
+                    当前环境运行稳定，日志流、终端服务和模型挂载状态正常。若出现 CUDA OOM、镜像拉取失败或启动异常，可在上方活动日志中查看详细信息。
                   </p>
                 </div>
 
