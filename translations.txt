@@ -3,7 +3,7 @@
 ## 导航和通用
 Dashboard -> 仪表盘
 Sandboxes -> 沙箱环境
-Batch Jobs -> 批处理任务
+Batch Jobs -> 批量任务
 Models -> 模型管理
 Datasets -> 数据集
 Files & Storage -> 文件存储
