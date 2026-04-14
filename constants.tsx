@@ -6,7 +6,7 @@ import { ResourceType, JobStatus, GPUResource, Workload, Model, Dataset } from '
 export const NAV_ITEMS = [
   { id: 'dashboard', label: '仪表盘', icon: <LayoutDashboard size={20} /> },
   { id: 'sandboxes', label: '沙箱环境', icon: <Terminal size={20} /> },
-  { id: 'jobs', label: '批处理任务', icon: <Rocket size={20} /> },
+  { id: 'jobs', label: '批量任务', icon: <Rocket size={20} /> },
   { id: 'models', label: '模型管理', icon: <Box size={20} /> },
   { id: 'datasets', label: '数据集', icon: <Database size={20} /> },
   { id: 'files', label: '文件存储', icon: <FolderTree size={20} /> },
@@ -22,6 +22,12 @@ export const MOCK_GPUS: GPUResource[] = [
 
 export const MOCK_WORKLOADS: Workload[] = [
   { id: 'wl-101', name: 'jupyter-lab-research-01', type: 'INTERACTIVE', owner: 'dr_chen', gpuRequested: 0.25, status: JobStatus.RUNNING, createdAt: '2023-10-25T10:00:00Z', updatedAt: '2023-10-25T10:00:00Z', logs: ['Starting JupyterLab...', 'Mounted PVC /data/models', 'Kernel initialized'], gpuType: ResourceType.H100 },
+  { id: 'wl-113', name: 'cuda-devbox-vision', type: 'INTERACTIVE', owner: 'cv_team', gpuRequested: 1, status: JobStatus.RUNNING, createdAt: '2023-10-25T09:20:00Z', updatedAt: '2023-10-25T12:40:00Z', logs: ['Preparing VS Code server...', 'Attached workspace /project/vision', 'TensorRT dependencies ready'], gpuType: ResourceType.L40S },
+  { id: 'wl-114', name: 'model-debug-terminal', type: 'INTERACTIVE', owner: 'platform_ops', gpuRequested: 0.5, status: JobStatus.PENDING, createdAt: '2023-10-25T12:10:00Z', updatedAt: '2023-10-25T12:10:00Z', logs: ['Sandbox requested', 'Waiting for fractional GPU scheduling'], gpuType: ResourceType.A100 },
+  { id: 'wl-115', name: 'lora-playground-dev', type: 'INTERACTIVE', owner: 'research_lab', gpuRequested: 2, status: JobStatus.RUNNING, createdAt: '2023-10-25T07:45:00Z', updatedAt: '2023-10-25T13:10:00Z', logs: ['Workspace synced from git', 'Mounted model cache', 'Jupyter and terminal services healthy'], gpuType: ResourceType.H100 },
+  { id: 'wl-116', name: 'notebook-audio-lab', type: 'INTERACTIVE', owner: 'audio_research', gpuRequested: 0.25, status: JobStatus.COMPLETED, createdAt: '2023-10-24T16:30:00Z', updatedAt: '2023-10-24T19:20:00Z', logs: ['Notebook session saved', 'Sandbox stopped cleanly'], gpuType: ResourceType.V100 },
+  { id: 'wl-117', name: 'prompt-eval-studio', type: 'INTERACTIVE', owner: 'product_ai', gpuRequested: 1, status: JobStatus.TERMINATED, createdAt: '2023-10-24T21:15:00Z', updatedAt: '2023-10-25T06:10:00Z', logs: ['Interactive session ended by user', 'Released workspace lock'], gpuType: ResourceType.A100 },
+  { id: 'wl-118', name: 'agent-sandbox-experiment', type: 'INTERACTIVE', owner: 'infra_lab', gpuRequested: 1, status: JobStatus.FAILED, createdAt: '2023-10-25T05:40:00Z', updatedAt: '2023-10-25T06:05:00Z', logs: ['Pulling base environment image...', 'Image pull failed: manifest unknown'], gpuType: ResourceType.H100 },
   { id: 'wl-102', name: 'bert-large-finetuning', type: 'BATCH', owner: 'ai_eng_sarah', gpuRequested: 1, status: JobStatus.RUNNING, createdAt: '2023-10-25T08:30:00Z', updatedAt: '2023-10-25T11:45:00Z', logs: ['Epoch 1: loss=0.45', 'Epoch 2: loss=0.32', 'Checkpoint saved'], gpuType: ResourceType.A100, priority: 'HIGH' as any, timeoutMinutes: 240 },
   { id: 'wl-103', name: 'llama-inference-finetune', type: 'BATCH', owner: 'ai_eng_sarah', gpuRequested: 0.5, status: JobStatus.RUNNING, createdAt: '2023-10-25T12:00:00Z', updatedAt: '2023-10-25T12:00:00Z', logs: ['Loading Llama-3-8B model...', 'Starting LoRA fine-tuning...'], gpuType: ResourceType.L40S, priority: 'NORMAL' as any, timeoutMinutes: 120 },
   { id: 'wl-103b', name: 'tinybert-experiment', type: 'BATCH', owner: 'ai_eng_sarah', gpuRequested: 0.25, status: JobStatus.RUNNING, createdAt: '2023-10-25T11:30:00Z', updatedAt: '2023-10-25T12:30:00Z', logs: ['Training TinyBERT...', 'Step 500/2000'], gpuType: ResourceType.V100, priority: 'LOW' as any, timeoutMinutes: 60 },
@@ -52,6 +58,7 @@ export const MOCK_DATASETS: Dataset[] = [
 export const STATUS_COLORS = {
   [JobStatus.RUNNING]: 'text-green-400 bg-green-400/10 border-green-400/20',
   [JobStatus.PENDING]: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
+  [JobStatus.PAUSED]: 'text-violet-300 bg-violet-400/10 border-violet-400/20',
   [JobStatus.COMPLETED]: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
   [JobStatus.FAILED]: 'text-red-400 bg-red-400/10 border-red-400/20',
   [JobStatus.TERMINATED]: 'text-slate-400 bg-slate-400/10 border-slate-400/20',

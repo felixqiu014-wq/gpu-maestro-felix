@@ -1,0 +1,10 @@
+.git
+.next
+.sealos
+.env
+.env.local
+.idea
+.vscode
+README.md
+node_modules
+npm-debug.log*

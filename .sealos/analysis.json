@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-04-14T12:15:45+08:00",
+  "project": {
+    "github_url": "git@github.com:felixqiu014-wq/gpu-maestro-felix.git",
+    "work_dir": "/Users/felixqiu/gpu-maestro-ui",
+    "repo_name": "gpu-maestro-ui",
+    "branch": "test-ui"
+  },
+  "score": {
+    "total": 6,
+    "verdict": "Good",
+    "dimensions": {
+      "statelessness": 1,
+      "config": 0,
+      "scalability": 1,
+      "startup": 1,
+      "observability": 2,
+      "boundaries": 1
+    }
+  },
+  "language": "node",
+  "all_languages": ["node"],
+  "framework": "nextjs",
+  "package_manager": "npm",
+  "port": 3000,
+  "databases": [],
+  "runtime_version": {
+    "node": "22",
+    "source": "default"
+  },
+  "env_vars": {},
+  "has_dockerfile": true,
+  "complexity_tier": "L1",
+  "image_ref": "ghcr.io/felixqiu014-wq/gpu-maestro-ui:20260414-123531"
+}

@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "last_deploy": {
+    "app_name": "gpu-maestro-ui-nuzhfnuv",
+    "namespace": "ns-44bchscw",
+    "image": "ghcr.io/felixqiu014-wq/topo-clusters-manager:gpu-maestro-ui-20260414-1346",
+    "url": "https://gpu-maestro-ui-nuzhfnuv.sealosgzg.site",
+    "last_updated_at": "2026-04-14T05:58:47Z"
+  },
+  "history": [
+    {
+      "at": "2026-04-14T05:58:47Z",
+      "action": "deploy",
+      "image": "ghcr.io/felixqiu014-wq/topo-clusters-manager:gpu-maestro-ui-20260414-1346",
+      "method": "kubectl-apply",
+      "status": "success",
+      "note": "Initial deployment after switching from the original gpu-maestro-ui package path to the topo-clusters-manager package path for successful GHCR pulls"
+    }
+  ]
+}

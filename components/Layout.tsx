@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NAV_ITEMS } from '../constants';
-import { Cpu, Bell, User, Search, Activity } from 'lucide-react';
+import { Cpu, Bell, Search, Activity } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -43,17 +43,6 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
           ))}
         </nav>
 
-        {/* Account Button at Bottom */}
-        <button
-          onClick={() => {
-            console.log('Account button clicked!');
-            setActiveTab('account');
-          }}
-          className="flex-shrink-0 mx-4 mb-4 flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:bg-slate-800 hover:text-slate-100 border border-transparent hover:border-slate-700"
-        >
-          <User size={20} />
-          <span className="font-medium">账户设置</span>
-        </button>
       </aside>
 
       {/* Main Content Area */}

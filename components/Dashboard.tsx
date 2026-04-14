@@ -112,7 +112,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           icon={<Activity className="text-indigo-400" />}
-          label="活跃批处理任务"
+          label="活跃批量任务"
           value={userStats.activeJobs.toString()}
           subValue={`${userStats.pendingJobs} 等待中`}
         />

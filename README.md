@@ -47,7 +47,7 @@ npm start
 
 - 仪表盘：查看 GPU 利用率、任务概览和成本趋势
 - 交互式沙箱：创建远程开发环境，支持终端和 VS Code 类工作流
-- 批处理任务：提交训练任务、选择资源来源、配置 GPU 硬件规格
+- 批量任务：提交训练任务、选择资源来源、配置 GPU 硬件规格
 - 模型管理：浏览模型版本并发起相关操作
 - 数据集管理：查看和选择可用数据集
 - 文件管理：管理共享文件与产物
@@ -59,7 +59,7 @@ npm start
   - `_app.tsx`：全局布局与导航
   - `index.tsx`：仪表盘页面
   - `sandboxes.tsx`：沙箱页面
-  - `jobs.tsx`：批处理任务页面
+  - `jobs.tsx`：批量任务页面
   - `models.tsx`：模型管理页面
   - `datasets.tsx`：数据集页面
   - `files.tsx`：文件管理页面
@@ -67,7 +67,7 @@ npm start
 - `components/`
   - `Dashboard.tsx`：仪表盘组件
   - `Sandboxes.tsx`：沙箱模块
-  - `BatchJobs.tsx`：批处理任务模块
+  - `BatchJobs.tsx`：批量任务模块
   - `ModelManagement.tsx`：模型管理模块
   - `DatasetManagement.tsx`：数据集模块
   - `FileManagement.tsx`：文件管理模块
