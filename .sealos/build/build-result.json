@@ -1,0 +1,13 @@
+{
+  "outcome": "success",
+  "registry": "ghcr",
+  "build": {
+    "image_name": "gpu-maestro-ui",
+    "started_at": "2026-04-14T04:35:31.000Z"
+  },
+  "push": {
+    "remote_image": "ghcr.io/felixqiu014-wq/gpu-maestro-ui:20260414-123531",
+    "pushed_at": "2026-04-14T04:40:17.000Z"
+  },
+  "finished_at": "2026-04-14T04:40:17.000Z"
+}
